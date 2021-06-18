@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <svg id="main"viewBox = "-100 0 200 5000"></svg>
+
+  </body>
+  <script type = "module">
+    import {SvgPlus, SvgPath, Vector, CPoint} from './3.5.js'
+    import {LighteningPath} from "./Lightening.js"
+
+    let main = new SvgPlus("main");
+    main.appendChild(new LighteningPath(new Vector(0, 1), new Vector(0)));
+
+  </script>
+
+  <style>
+    path{
+      fill: none;
+      stroke: black;
+    }
+  </style>
+
+</html>
