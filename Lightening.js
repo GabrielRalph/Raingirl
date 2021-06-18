@@ -23,7 +23,7 @@ class LighteningPath extends SvgPath{
   }
 
   re(){
-    this.clear();
+    this.d.clear();
     while(this.next());
   }
 
