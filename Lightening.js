@@ -6,6 +6,7 @@ class LighteningPath extends SvgPath{
     super("path");
     if (direction instanceof Vector && start instanceof Vector) {
       this.dir = direction.dir();
+      this.ogstart = start;
       this.start = start;
     }else{
       throw 'LighteningPath constructor requires direction Vector.'
@@ -23,6 +24,7 @@ class LighteningPath extends SvgPath{
   }
 
   re(){
+    this.start = this.ogstart;
     this.d.clear();
     while(this.next());
   }
