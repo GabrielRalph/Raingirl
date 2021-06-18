@@ -15,6 +15,15 @@ class LighteningPath extends SvgPath{
     this.std_length = 30;
     this.length = Math.round(10 + Math.random() * 10);
     this.i = 0;
+    this.re();
+  }
+
+  onclick(){
+    this.re();
+  }
+
+  re(){
+    this.clear();
     while(this.next());
   }
 
