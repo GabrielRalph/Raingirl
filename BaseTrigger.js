@@ -37,7 +37,7 @@ class BaseTrigger{
   }
 
   async handleStream(stream){
-    alert("handle stream")
+    // alert("handle stream")
     try{
 
       this.ctx = new AudioContext();
@@ -50,7 +50,7 @@ class BaseTrigger{
       this.bass_freq.frequency.value = freq_center;
       this.bass_freq.Q.value = freq_center/(this.bass_max - this.bass_min);
 
-      alert(this.ctx.audioWorklet)
+      // alert(this.ctx.audioWorklet)
       await this.ctx.audioWorklet.addModule('base-trigger-processor.js')
       this.base_trigger = new AudioWorkletNode(this.ctx, 'base-trigger-processor')
 

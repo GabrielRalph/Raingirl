@@ -60,7 +60,7 @@ class LighteningPath extends SvgPath{
         }
       }
       if (np.x < this.v0.x || np.x > this.vs.x || np.y < this.v0.y || np.y > this.vs.y) {
-        this.styles = {stroke: 'red'}
+        // this.styles = {stroke: 'red'}
         return false;
       }
       this.start = np;

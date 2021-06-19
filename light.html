@@ -5,24 +5,28 @@
     <title>Raingirl</title>
   </head>
   <body>
-    <svg id="main"viewBox = "-1000 0 2000 2000"></svg>
+    <svg id="main"viewBox = "-100 0 200 200"></svg>
 
   </body>
   <script type = "module">
     import {SvgPlus, SvgPath, Vector, CPoint} from './3.5.js'
     import {LighteningPath} from "./Lightening.js"
+    import {BaseTrigger} from './BaseTrigger.js'
 
     let main = new SvgPlus("main");
-    let light = new LighteningPath(new Vector(0, 1), new Vector(0));
-    main.appendChild(light);
 
 
-    light.re();
+
+
 
     async function flash(svg){
+      let light = new LighteningPath(new Vector(0, 1), new Vector(0));
+      svg.appendChild(light);
+      light.re();
+
       let max;
       for (var i = 0; i < 5; i++) {
-        max = 1 + Math.random()*5;
+        max = 1 + Math.random()*3;
         let tmax = 70 + (0.5 - Math.random())*60;
         await svg.waveTransistion((t) => {
           svg.styles = {"stroke-width": 1+max*t};
@@ -32,20 +36,43 @@
       await svg.waveTransistion((t) => {
         svg.styles = {"stroke-width": max*t};
       }, 150, false)
+      svg.innerHTML = ""
     }
 
-    flash(main);
+
+    let running = false;
+    let init = true;
+    document.body.onclick = () => {
 
 
-    window.onclick = () => {
-      light.re();
+      if (init) {
+        let base = new BaseTrigger()
+        let audio = base.playMP3File("flex.mp3");
+        base.onbass = () => {
+          if (!running) {
+            console.log(running);
+            let run = async () => {
+              running = true;
+              await flash(main);
+              running = false;
+            }
+            run();
+          }
+
+        }
+      }
+      init = false;
+
     }
   </script>
 
   <style>
+    body{
+      background: black;
+    }
     path{
       fill: none;
-      stroke: black;
+      stroke: white;
     }
   </style>
 

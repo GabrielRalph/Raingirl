@@ -60,6 +60,7 @@ class PlusError{
 }
 
 // 2D vector class
+let PrecisionDefault = 3;
 class Vector{
 	constructor(x = 0, y = null){
 		try{
@@ -167,7 +168,7 @@ class Vector{
 			this.y = 0;
 			console.error(`error creating vector\n\n${e}\n\nResult: V(${this})`);
 		}
-		this.precision = 10;
+		this.precision = PrecisionDefault;
 	}
 
 	forMate(val){
@@ -399,7 +400,8 @@ class Vector{
 		return (this.x == 0 && this.y == 0)
 	}
 	toString(){
-		return `${this.x.toPrecision(this.precision)},${this.y.toPrecision(this.precision)}`
+    let r = this.round(this.precision);
+		return `${r.x},${r.y}`
 	}
 }
 

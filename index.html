@@ -4,9 +4,8 @@
     <meta charset="utf-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- <script type="text/javascript" src = "AudioPatch.js"> -->
-
-    <!-- </script> -->
+    <script type="text/javascript" src = "AudioPatch.js">
+    </script>
     <title></title>
   </head>
   <body>
@@ -334,6 +333,8 @@
       				c6.49,58.43,62.29,497.89,62.29,497.89"/>
       			<path d="M454.04,542.42c5.37,14.26,21.87,100.69,27.64,157.33c5.63,55.32,21.22,213.92,22.05,276.51
       				c0.79,60.27,38.66,502.99,38.66,502.99"/>
+            <path d="M434.87,547.06c4.97,37.4,26.72,212.27,31.14,247.87c4.43,35.6,15.44,231.67,17.34,264.03
+      				c1.9,32.35,17.99,418.22,17.99,418.22"/>
       			<path d="M261.24,533.79c-27.94,21.88-66.7,34.48-77.84,87.28c-11.14,52.8-10.17,202.49-10.17,218.48
       				s4.36,149.2,6.78,180.21c2.42,31,10.66,247.35,10.66,247.35"/>
       			<path d="M268.38,538.66c-16.19,13.13-52.74,42.63-63.88,70.72c-11.14,28.1-12.38,129.88-12.38,173
@@ -350,8 +351,7 @@
       				c3.14,22.85,6.04,72.3,8.54,94.32c2.49,22.02,9.93,252.07,12.81,285.89c2.88,33.82,16.04,386.09,16.04,386.09"/>
       			<path d="M380.71,561.94c0,0,10.47,68.38,16.65,102.85c6.18,34.46,13.78,95.62,16.05,115.03
       				c2.27,19.42,9.06,123.77,10.52,153.86c1.46,30.09,28.68,548.02,28.68,548.02"/>
-      			<path d="M434.87,547.06c4.97,37.4,26.72,212.27,31.14,247.87c4.43,35.6,15.44,231.67,17.34,264.03
-      				c1.9,32.35,17.99,418.22,17.99,418.22"/>
+
       		</g>
       	</g>
       </g>
@@ -364,183 +364,178 @@
     import {SvgPlus, SvgPath, Vector, CPoint} from './3.5.js'
     import {LighteningPath} from './Lightening.js'
     import {BaseTrigger} from './BaseTrigger.js'
+    import {Sprite} from './Sprite.js'
 
     let base = new BaseTrigger(10, 2, 20);
 
 
-    class RainDrop extends SvgPath{
-      constructor(el){
+    class RainDrop extends Sprite{
+      constructor(el, path, offset = 0, a = 100, max_drops = 5){
         super(el);
-        this._size = 1;
-        let bbox = this.getBBox();
-        let pos = new Vector(bbox);
-        let size = new Vector(bbox.width, bbox.height);
-        let center = pos.add(size.div(2));
-        this.queue(new CPoint(`M${center}`));
-        this.makeRelative();
-      }
-
-      set size(size) {
-        let cur = this.d.start.next;
-        while (cur != null) {
-          cur.mul(size/this._size);
-          cur = cur.next;
+        if (!SvgPlus.is(path, SvgPath)) {
+          throw 'RainDrop constructor 2nd paramater must be SvgPath'
         }
-        this._size = size;
+
+        this.path = path;
+        this.n = this.path.getTotalLength();
+        this.a = this.n*2/(16);
+        this.tn = Math.sqrt(this.n*2/this.a);
+        console.log(this.tn);
+        this.toffset = this.tn * offset / max_drops;
+
       }
 
-      get size(){
-        return this._size;
-      }
-
-      set direction(direction){
-        if (direction instanceof Vector) {
-          let angle = direction.arg() - Math.PI/2;
-          let c = this.pos;
-          this.makeAbsolute();
-          let cur = this.d.start.next;
-          while (cur != null) {
-            cur.p = cur.p.sub(c).rotate(angle).add(c);
-            cur.c1 = cur.c1.sub(c).rotate(angle).add(c);
-            cur.c2 = cur.c2.sub(c).rotate(angle).add(c);
-            cur = cur.next;
-          }
-          this.makeRelative();
+      next(t){
+        t /= 1000;
+        t -= this.toffset;
+        t = t%this.tn;
+        // console.log(t);
+        if (t >= 0) {
+          let x = 0.5 * this.a * t * t;
+          // if (x > this.n + 0.01) {
+          //   this.toffset += t;
+          //   x = 0;
+          // }
+          let v1 = this.path.getVectorAtLength(x);
+          let v2 = this.path.getVectorAtLength(x + 0.01);
+          this.dir = -v2.sub(v1).angleBetween(new Vector(0, 1));
+          this.pos = v1;
+          this.scale = 1 + 4*x/this.n;
+          this.draw();
         }
-      }
-
-      set pos(vector){
-          if (vector instanceof Vector) {
-            this._pos = vector;
-            this.d.start.p = vector;
-          }
-      }
-
-      get pos(){
-        return this._pos;
-      }
-
-      clone(){
-        let n = new RainDrop("path");
-        n.d_string = this.d_string;
-        return n;
       }
     }
 
     let group = new SvgPlus("Sprites");
-    function getSprites() {
+    function getSprites(path, offset = 0) {
       let sprites = [];
       for (let child of group.children) {
         if (child instanceof SVGPathElement) {
-          sprites.push(new RainDrop(child.cloneNode()));
+          let raindrop = new RainDrop("g", path, sprites.length+offset);
+          raindrop.appendChild(child.cloneNode());
+          sprites.push(raindrop);
         }
       }
       return sprites;
     }
 
-    class SpritePath extends SvgPath{
-      constructor(id, output){
-        super(id);
-        if (!(output instanceof SVGGElement)) {
-          throw `Output must be a group element`
-        }
-        this.out = output;
-        this.a = 10;
-        this.ts = 150;
-      }
-
-
-
-      start(sprite) {
-        this.l = this.getTotalLength();
-        let t0 = 0;
-        let nextFrame = (t) => {
-          if (this.next(t - t0, sprite)) {
-            this.out.appendChild(sprite);
-            window.requestAnimationFrame(nextFrame);
-          }else{
-            sprite.remove();
-          }
-        }
-        window.requestAnimationFrame((t) => {
-          t0 = t;
-          nextFrame(t);
-        })
-      }
-
-
-      next(t, sprite) {
-        t /= this.ts;
-        let lx = 0.5 * Math.pow(t, 2) * this.a;
-        // console.log(lx, t);
-        if (lx < this.l) {
-          let v1 = this.getVectorAtLength(lx);
-          let v2 = this.getVectorAtLength(lx + 0.01);
-          sprite.pos = v1;
-          // sprite.direction = v2.sub(v1);
-          // console.log(1 + 2.5 * lx / this.l);
-          sprite.size = 1 + 2.5 * lx / this.l;
-          return true;
-        }else {
-          return false;
-        }
-      }
-    }
-
-    function animatePath(path, outputr) {
-      let sprites = getSprites();
-      let spath = new SpritePath(path, outputr);
-      let x = 0;
-      let next = () => {
-
-          spath.start(sprites[x]);
-          x = (x + 1) % 5;
-          setTimeout(next, 500);
-
-      }
-      next();
-    }
-
+    // class SpritePath extends SvgPath{
+    //   constructor(id, output){
+    //     super(id);
+    //     if (!(output instanceof SVGGElement)) {
+    //       throw `Output must be a group element`
+    //     }
+    //     this.out = output;
+    //     this.a = 10;
+    //     this.ts = 150;
+    //   }
+    //
+    //
+    //
+    //   start(sprite) {
+    //     this.l = this.getTotalLength();
+    //     let t0 = 0;
+    //     let nextFrame = (t) => {
+    //       if (this.next(t - t0, sprite)) {
+    //         this.out.appendChild(sprite);
+    //         window.requestAnimationFrame(nextFrame);
+    //       }else{
+    //         sprite.remove();
+    //       }
+    //     }
+    //     window.requestAnimationFrame((t) => {
+    //       t0 = t;
+    //       nextFrame(t);
+    //     })
+    //   }
+    //
+    //
+    //   next(t, sprite) {
+    //     t /= this.ts;
+    //     let lx = 0.5 * Math.pow(t, 2) * this.a;
+    //     // console.log(lx, t);
+    //     if (lx < this.l) {
+    //       let v1 = this.getVectorAtLength(lx);
+    //       let v2 = this.getVectorAtLength(lx + 0.01);
+    //       sprite.pos = v1;
+    //       // sprite.direction = v2.sub(v1);
+    //       // console.log(1 + 2.5 * lx / this.l);
+    //       sprite.size = 1 + 2.5 * lx / this.l;
+    //       return true;
+    //     }else {
+    //       return false;
+    //     }
+    //   }
+    // }
+    //
+    // function animatePath(path, outputr) {
+    //   let sprites = getSprites();
+    //   let spath = new SpritePath(path, outputr);
+    //   let x = 0;
+    //   let next = () => {
+    //
+    //       spath.start(sprites[x]);
+    //       x = (x + 1) % 5;
+    //       setTimeout(next, 500);
+    //
+    //   }
+    //   next();
+    // }
+    let raindrops = [];
     function rainPaths(id) {
       let anim = new SvgPlus(id);
       let outputr = anim.makeChild('g', {class: 'raindrops'});
       let paths = anim.getElementsByClassName("rain-paths")[0].children;
-
       let i = 0;
-      let next = () => {
-        if (i < paths.length) {
-          animatePath(paths[i], outputr);
-          i++;
-          setTimeout(next, 250);
+      for (let path of paths) {
+        let psprites = getSprites(new SvgPath(path), i?0.5:0);
+        i = !i;
+        console.log(i);
+        for (let sprite of psprites) {
+          outputr.appendChild(sprite);
         }
       }
-
-      next();
 
       return outputr;
-
     }
 
-    let drops = rainPaths("Front");
-    function getSpritePoses(sprites) {
-      let output = [];
-      let i = 0;
-      for (let child of sprites.children) {
-        output.push({pos: child.pos, size: child.size, i: i});
-        i++;
-      }
-      return output;
-    }
+    let output = rainPaths("Front");
 
-    function isTouchingSprite(sprites, loc){
-      let poses = getSpritePoses(sprites);
-      for (let pose of poses) {
-        if (pose.pos.dist(loc) < pose.size*5) {
-          return true;
+    function drawAll(drops) {
+      let start = (t0) => {
+        let next = (t) => {
+          // console.log(t - t0);
+          for (let sprite of drops.children) {
+            sprite.next(t - t0);
+          }
+          window.requestAnimationFrame(next)
         }
+        window.requestAnimationFrame(next)
       }
-      return false;
+      window.requestAnimationFrame(start)
     }
+
+    drawAll(output);
+
+    // function getSpritePoses(sprites) {
+    //   let output = [];
+    //   let i = 0;
+    //   for (let child of sprites.children) {
+    //     output.push({pos: child.pos, size: child.size, i: i});
+    //     i++;
+    //   }
+    //   return output;
+    // }
+    //
+    // function isTouchingSprite(sprites, loc){
+    //   let poses = getSpritePoses(sprites);
+    //   for (let pose of poses) {
+    //     if (pose.pos.dist(loc) < pose.size*5) {
+    //       return true;
+    //     }
+    //   }
+    //   return false;
+    // }
 
 
     rainPaths("Shoulder");
@@ -561,7 +556,7 @@
         max = 1 + Math.random()*5;
         let tmax = 40 + (0.5 - Math.random())*60;
         await parent.waveTransistion((t) => {
-          parent.styles = {"stroke-width": 1+max*t};
+          g.styles = {"stroke-width": 1+max*t};
         }, tmax, true)
       }
 
@@ -576,15 +571,15 @@
 
     let running = false;
     document.body.onclick = () => {
-      alert("play")
+      // alert("play")
 
       if (init) {
-        let audio = base.playMP3File("flex.mp3");
+        let audio = base.playMP3File("missit.mp3");
         base.onbass = () => {
           if (!running) {
             let run = async () => {
               running = true;
-              await makeLight(drops.parentNode, drops);
+              await makeLight(output.parentNode, output);
               running = false;
             }
             run();

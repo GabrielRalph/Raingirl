@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <svg id = main viewBox="0 0 1000 2000">
+      <g>
+        <path d="M14.13,1.98c0.01,2.13-1.8,3.24-1.8,5.28c0,1.23,0.48,2.37,1.78,2.37c1.3,0,1.8-1.4,1.8-2.38
+      		C15.92,5.72,14.15,4.06,14.13,1.98z"/>
+      </g>
+    </svg>
+  </body>
+  <script type="module">
+    import {SvgPlus, SvgPath, Vector, CPoint} from './3.5.js'
+    import {Sprite} from "./Sprite.js"
+    let main = new SvgPlus("main");
+    let g = main.createChild("g", {class: "grid"});
+    for (let i = 0; i < 1000; i+=50){
+      let p = g.createChild(SvgPath);
+      p.M(new Vector(i, 0)).L(new Vector(i, 2000));
+    }
+    for (let i = 0; i < 2000; i+=50){
+      let p = g.createChild(SvgPath);
+      p.M(new Vector(0, i)).L(new Vector(1000, i));
+    }
+    let el = main.children[0];
+    let cel = el.cloneNode();
+    cel.innerHTML = el.innerHTML;
+    let sprite = new Sprite(cel);
+    main.appendChild(sprite);
+    sprite.pos = new Vector(150, 125);
+    sprite.scale = 4;
+    sprite.waveTransistion((t) => {
+      sprite.dir = 360*t;
+      sprite.scale = 1 + t*5;
+      sprite.pos = new Vector(100 + 50*Math.sin(t*Math.PI*2), 100+ 50*Math.cos(t*Math.PI*2))
+      // console.log(t);
+    }, 2000, true)
+  </script>
+  <style>
+    .grid{
+      stroke: rgba(0,0,0,0.5);
+    }
+  </style>
+</html>
