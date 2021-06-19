@@ -5,7 +5,7 @@
     <title>Raingirl</title>
   </head>
   <body>
-    <svg id="main"viewBox = "-100 0 200 5000"></svg>
+    <svg id="main"viewBox = "-1000 0 2000 2000"></svg>
 
   </body>
   <script type = "module">
@@ -13,8 +13,33 @@
     import {LighteningPath} from "./Lightening.js"
 
     let main = new SvgPlus("main");
-    main.appendChild(new LighteningPath(new Vector(0, 1), new Vector(0)));
+    let light = new LighteningPath(new Vector(0, 1), new Vector(0));
+    main.appendChild(light);
 
+
+    light.re();
+
+    async function flash(svg){
+      let max;
+      for (var i = 0; i < 5; i++) {
+        max = 1 + Math.random()*5;
+        let tmax = 70 + (0.5 - Math.random())*60;
+        await svg.waveTransistion((t) => {
+          svg.styles = {"stroke-width": 1+max*t};
+        }, tmax, true)
+      }
+
+      await svg.waveTransistion((t) => {
+        svg.styles = {"stroke-width": max*t};
+      }, 150, false)
+    }
+
+    flash(main);
+
+
+    window.onclick = () => {
+      light.re();
+    }
   </script>
 
   <style>

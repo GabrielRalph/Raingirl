@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <script type="text/javascript" src = "AudioPatch.js">
+
+    </script>
     <title></title>
   </head>
   <body>
@@ -359,8 +362,13 @@
 
   <script type = "module">
     import {SvgPlus, SvgPath, Vector, CPoint} from './3.5.js'
+    import {LighteningPath} from './Lightening.js'
+    import {BaseTrigger} from './BaseTrigger.js'
 
-    class PathSprite extends SvgPath{
+    let base = new BaseTrigger(10, 2, 20);
+
+
+    class RainDrop extends SvgPath{
       constructor(el){
         super(el);
         this._size = 1;
@@ -379,6 +387,10 @@
           cur = cur.next;
         }
         this._size = size;
+      }
+
+      get size(){
+        return this._size;
       }
 
       set direction(direction){
@@ -409,7 +421,7 @@
       }
 
       clone(){
-        let n = new PathSprite("path");
+        let n = new RainDrop("path");
         n.d_string = this.d_string;
         return n;
       }
@@ -420,7 +432,7 @@
       let sprites = [];
       for (let child of group.children) {
         if (child instanceof SVGPathElement) {
-          sprites.push(new PathSprite(child.cloneNode()));
+          sprites.push(new RainDrop(child.cloneNode()));
         }
       }
       return sprites;
@@ -491,7 +503,7 @@
 
     function rainPaths(id) {
       let anim = new SvgPlus(id);
-      let outputr =anim.makeChild('g', {class: 'raindrops'});
+      let outputr = anim.makeChild('g', {class: 'raindrops'});
       let paths = anim.getElementsByClassName("rain-paths")[0].children;
 
       let i = 0;
@@ -505,11 +517,84 @@
 
       next();
 
+      return outputr;
+
     }
 
-    rainPaths("Front");
+    let drops = rainPaths("Front");
+    function getSpritePoses(sprites) {
+      let output = [];
+      let i = 0;
+      for (let child of sprites.children) {
+        output.push({pos: child.pos, size: child.size, i: i});
+        i++;
+      }
+      return output;
+    }
+
+    function isTouchingSprite(sprites, loc){
+      let poses = getSpritePoses(sprites);
+      for (let pose of poses) {
+        if (pose.pos.dist(loc) < pose.size*5) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+
     rainPaths("Shoulder");
 
+    async function makeLight(parent, sprites) {
+      let g = new SvgPlus("g");
+      g.class = "lightening"
+      parent.appendChild(g);
+      let l = new LighteningPath(new Vector(0, 1), new Vector(320, 550));
+      // l.canmove = (v) => {
+      //   return !isTouchingSprite(sprites, v);
+      // }
+      g.appendChild(l);
+      l.re();
+
+      let max;
+      for (var i = 0; i < 5; i++) {
+        max = 1 + Math.random()*5;
+        let tmax = 40 + (0.5 - Math.random())*60;
+        await parent.waveTransistion((t) => {
+          parent.styles = {"stroke-width": 1+max*t};
+        }, tmax, true)
+      }
+
+      await parent.waveTransistion((t) => {
+        parent.styles = {"stroke-width": max*t};
+      }, 150, false)
+
+      g.remove();
+    }
+
+    let init = true;
+
+    let running = false;
+    document.body.onclick = () => {
+      alert("play")
+
+      if (init) {
+        let audio = base.playMP3File("flex.mp3");
+        base.onbass = () => {
+          if (!running) {
+            let run = async () => {
+              running = true;
+              await makeLight(drops.parentNode, drops);
+              running = false;
+            }
+            run();
+          }
+
+        }
+      }
+      init = false;
+
+    }
 
 
   </script>
@@ -526,6 +611,11 @@
     .raindrops {
       fill: #4AA9FF;
       stroke: #0086FF;
+    }
+
+    .lightening path{
+      stroke: white;
+      fill: none;
     }
 
     .background .st1{fill:none;stroke:#003D96;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
